@@ -39,3 +39,5 @@ if [ ${key} ]; then
     echo -e "\n\t\NO KEY FILE PROVIDED\n"
     read -p "please enter the location of your key file:" key_loc
 fi
+
+#to be finished .....
