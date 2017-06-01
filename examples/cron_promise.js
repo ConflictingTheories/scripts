@@ -1,6 +1,4 @@
 var p = require('../lib/javascript/patterns.js');
-var cron = require('node-cron');
-
 
 // TOOLS
 var via = p.via;
@@ -12,19 +10,20 @@ var scheduler = p.scheduler;
 (function main() {
     let stack = [];
     let register = registrator(stack);
+    let accumulate = accumulator(stack);
     let schedule = scheduler(stack);
+    let scheduleCustom = scheduler(stack, customHandler);
 
     let start = Promise.resolve();
     start
-        .then(() => register("action_1", via(doActionPM)))
-        .then(() => register("action_2", via(doActionPM)))
-        .then(() => schedule("job_id1","*/2 * * * * *", cronJob))
-        .then(() => schedule("job_id2","*/15 * * * * *", cronJob2))
-        .then(() => schedule("job_id3","*/10 * * * * *", cronJob3))
-        .then(()=>console.log(stack))
+        .then(() => register("setup", via(doActionPM))) // Setup Actions 
+        .then(() => accumulate("setup", via(doActionPM))) // More Setup Actions
+        .then(() => schedule("good_jobs", "*/2 * * * * *", cronJob)) // Job 1
+        .then(() => scheduleCustom("bad_jobs", "*/15 * * * * *", cronJob2)) // Job 2 // Fails -- should kill how system
+        .then(() => schedule("good_jobs", "*/10 * * * * *", cronJob3)) // Job 3
+        .then(() => console.log("JOBS STARTED::\n", stack))
         .catch((err) => console.error("ERROR:", err, "\nSTACK DUMP::", stack));
 })();
-
 
 // TEST ACTION DUMMY
 function doActionPM(ms) {
@@ -87,4 +86,22 @@ function cronJob3() {
             resolve(true);
         }
     });
+}
+
+// CUSTOM ERROR HANDLER FOR CRON JOBS
+function customHandler(stack) {
+    return (id, cronJob) => {
+        return () => {
+            Promise.resolve()
+                .then(() => registrator(stack)("",via(cronJob)))
+                .catch((err) => {
+                    console.error("ID:", id, "\nERROR:", err)
+                    for (j_id of stack[id]) {
+                        j_id.destroy();
+                    }
+                    console.log("Custom --- Handler");
+                    process.exit();
+                });
+        }
+    }
 }
