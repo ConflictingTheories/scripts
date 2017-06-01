@@ -70,13 +70,14 @@ function cronJob3() {
 function main() {
     let stack = [];
     let register = p.registrator(stack);
+    let schedule = p.scheduler(stack);
     let start = Promise.resolve();
     start
         .then(() => register("action_1", p.via(doActionPM)))
         .then(() => register("action_2", p.via(doActionPM)))
-        .then(() => register("job_id", p.via(cron.schedule("*/3 * * * * *", createCronJobWrapper("job_id1", stack, cronJob)))))
-        .then(() => register("job_id2", p.via(cron.schedule("*/5 * * * * *", createCronJobWrapper("job_id2", stack, cronJob2)))))
-        .then(() => register("job_id3", p.via(cron.schedule("*/2 * * * * *", createCronJobWrapper("job_id3", stack, cronJob3)))))
+        .then(() => schedule("job_id1","*/2 * * * * *", cronJob))
+        .then(() => schedule("job_id2","*/15 * * * * *", cronJob2))
+        .then(() => schedule("job_id3","*/10 * * * * *", cronJob3))
         .catch((err) => console.error("ERROR:", err, "\nSTACK DUMP::", stack));
 }
 
