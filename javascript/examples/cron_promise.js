@@ -1,3 +1,8 @@
+// ============================
+// Javascript Design Patterns
+// ============================
+// Copyright (c) Kyle Derby MacInnis
+
 var p = require('../lib/javascript/patterns.js');
 
 // TOOLS
