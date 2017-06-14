@@ -5,7 +5,7 @@
 
 // Initialize
 (function ExampleService() {
-    ngUtils.provideService('ex_service', function() {
+    provideService('ex_service', function() {
         // Service Code Goes Here
     });
 })();

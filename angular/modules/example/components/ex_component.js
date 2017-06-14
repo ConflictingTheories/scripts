@@ -5,7 +5,7 @@
 
 // Initialize
 (function ExampleComponent() {
-    ngUtils.provideComponent('ex_component', function() {
+    provideComponent('ex_component', function() {
         return {
             template: "<h1>{{Test}}</h1>",
             controller: function() {
