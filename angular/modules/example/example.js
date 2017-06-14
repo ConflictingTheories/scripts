@@ -4,6 +4,9 @@
 // Copyright (c) Kyle Derby MacInnis
 
 (function ExampleModule() {
+    // Module
     var Example = angular.module('example', [])
-    Example.value('example', "value");
+        // Controller
+    console.log(requestController('exCtrl'));
+    Example.controller('exCtrl', requestController('exCtrl'));
 })();
