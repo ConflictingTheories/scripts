@@ -199,8 +199,8 @@ const Patterns = {
                 Promise.resolve()
                     .then(() => Patterns.registrator(stack)("", Patterns.via(cronJob())))
                     .catch((err) => {
-                        console.error("\nERROR:", err,"\n\tJOB_ID:", id, );
-                        for (j_id of stack[id]) {
+                        console.error("\nERROR:", err,"\n\tJOB_ID:", id);
+                        for (let j_id of stack[id]) {
                             j_id.destroy();
                         }
                         process.exit();

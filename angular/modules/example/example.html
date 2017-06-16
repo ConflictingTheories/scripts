@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.1/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/1.0.3/angular-ui-router.min.js"></script>
+
+    <!-- Libraries -->
+    <script src="../../lib/ngUtils.js"></script>
+
+    <!-- Controllers -->
+    <script src="./controllers/ex_controller.js"></script>
+
+    <!-- Application -->
+    <script src="./example.js"></script>
+</head>
+
+<body ng-app="example" ng-controller="exCtrl">
+    <br> {{exVar}} : {{exNum}}
+    <br><br>
+    <input type="number" ng-model="exNum">
+    <br><br>
+    <input type="text" ng-model="exVar">
+</body>
+
+</html>
