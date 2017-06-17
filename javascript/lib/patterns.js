@@ -20,13 +20,13 @@ const Patterns = {
     },
     // Memoize a Function (allows for custom key generator *optional)
     memoize: (fn, keygen) => {
-        let memoized = () => {
+        return () => {
             // Actual Cache Object
-            memoized.cache = {};
+            this.cache = [];
             // Used to Determine Inputs
             keygen = keygen || JSON.stringify;
             // Setup the Cache
-            let cache = memoized.cache;
+            let cache = this.cache;
             // Extract Inputs
             let args = Array.prototype.slice.call(arguments);
             // Generate Cache Key
@@ -34,8 +34,6 @@ const Patterns = {
             // Return Cached value (if Exists - otherwise cache for next time)
             return (key in cache) ? cache[key] : (cache[key] = fn.apply(this, arguments));
         };
-        // Return Memoized Function
-        return memoized;
     },
     // Returns functions that can be initialized in part and passed along with memory
     curry: (fn) => {
@@ -46,7 +44,7 @@ const Patterns = {
             // Copies a list of arguments (if any)
             let memory = Array.prototype.slice.call(arguments);
             // Returns the curried verion (or final result if completed)
-            return function () {
+            return function() {
                 // This is actual storage during partial initialization
                 let internal = memory.slice();
                 // Push Argument into Memory
@@ -61,7 +59,7 @@ const Patterns = {
     // Register for Promises (Object to store results into) ( > ) (injector - Assignor)
     registrator: (stack) => {
         // Returns a function to Chain promises together with property names
-        return function (property, promise) {
+        return function(property, promise) {
             // The function returns a new Promise for the Chain itself
             return new Promise((resolve, reject) => {
                 // Create Link in the Chain - If Function (not Promise) then resolve to promise
@@ -99,107 +97,107 @@ const Patterns = {
     accumulator: (stack) => {
         // Returns a function to Chain promises together with property names
         return (property, promise) => {
-            // The function returns a new Promise for the Chain itself
-            return new Promise((resolve, reject) => {
-                // Create Link in the Chain - If Function (not Promise) then resolve to promise
-                let doAction = (typeof promise === "function") ? promise() : (typeof promise.then === "function") ? promise : Promise.resolve(promise);
-                // Resolve Promise and retrieve result
-                doAction.then((result) => {
-                        // If Array is sent in (Concat)
-                        if (_isArray(result)) {
-                            // If Property name is Set and prop exists
-                            if (property && property !== "") {
-                                // Concat new Values into Array
-                                if (_isArray(stack[property])) {
-                                    stack[property] = stack[property].concat(result);
-                                } else {
-                                    stack[property] = [stack[property]].concat(result);
+                // The function returns a new Promise for the Chain itself
+                return new Promise((resolve, reject) => {
+                    // Create Link in the Chain - If Function (not Promise) then resolve to promise
+                    let doAction = (typeof promise === "function") ? promise() : (typeof promise.then === "function") ? promise : Promise.resolve(promise);
+                    // Resolve Promise and retrieve result
+                    doAction.then((result) => {
+                            // If Array is sent in (Concat)
+                            if (_isArray(result)) {
+                                // If Property name is Set and prop exists
+                                if (property && property !== "") {
+                                    // Concat new Values into Array
+                                    if (_isArray(stack[property])) {
+                                        stack[property] = stack[property].concat(result);
+                                    } else {
+                                        stack[property] = [stack[property]].concat(result);
+                                    }
+                                    resolve(stack);
                                 }
+                                // Just Pass Through
+                                else if (property === "") {
+                                    resolve(result);
+                                }
+                            }
+                            // Else if number (sum)
+                            else if (typeof result === "number") {
+                                if (property && property !== "") {
+                                    if (_isArray(stack[property])) {
+                                        stack[property].push(result);
+                                    } else if (typeof stack[property] === "number") {
+                                        stack[property] += result;
+                                    } else {
+                                        stack[property] = stack[property] ? [stack[property]] : [];
+                                        stack[property].push(result);
+                                    }
+                                }
+                                // Resolve
                                 resolve(stack);
                             }
-                            // Just Pass Through
-                            else if (property === "") {
-                                resolve(result);
-                            }
-                        }
-                        // Else if number (sum)
-                        else if (typeof result === "number") {
-                            if (property && property !== "") {
-                                if (_isArray(stack[property])) {
-                                    stack[property].push(result);
-                                } else if (typeof stack[property] === "number") {
-                                    stack[property] += result;
-                                } else {
-                                    stack[property] = stack[property] ? [stack[property]] : [];
-                                    stack[property].push(result);
-                                }
-                            }
-                            // Resolve
-                            resolve(stack);
-                        }
-                        // Else - Push value into Property
-                        else {
-                            if (property && property !== "") {
-                                // Push new Value into Array
-                                if (_isArray(stack[property])) {
-                                    stack[property].push(result);
-                                } else {
-                                    let newData = stack[property] ? [stack[property]] : [];
-                                    newData.push(result);
-                                    stack[property] = newData;
-                                }
-                            }
-                            // Just Pass Through 
-                            else if (property === "") {
-                                resolve(result);
-                            }
-                            // If Property is Null (Used for Chaining Chains) (but not undefined)
-                            else if (property === null) {
-                                // Merge Keys with New in Favour of Old
-                                for (let key in result) {
-                                    if (stack[key]) {
-                                        if (_isArray(result[key])) {
-                                            stack[key] = stack[key].concat(result[key]);
-                                        } else {
-                                            stack[key].push(result[key]);
-                                        }
+                            // Else - Push value into Property
+                            else {
+                                if (property && property !== "") {
+                                    // Push new Value into Array
+                                    if (_isArray(stack[property])) {
+                                        stack[property].push(result);
                                     } else {
-                                        if (_isArray(result[key])) {
-                                            stack[key] = stack[key] ? [stack[key]].concat(result[key]) : [].concat(result[key]);
+                                        let newData = stack[property] ? [stack[property]] : [];
+                                        newData.push(result);
+                                        stack[property] = newData;
+                                    }
+                                }
+                                // Just Pass Through 
+                                else if (property === "") {
+                                    resolve(result);
+                                }
+                                // If Property is Null (Used for Chaining Chains) (but not undefined)
+                                else if (property === null) {
+                                    // Merge Keys with New in Favour of Old
+                                    for (let key in result) {
+                                        if (stack[key]) {
+                                            if (_isArray(result[key])) {
+                                                stack[key] = stack[key].concat(result[key]);
+                                            } else {
+                                                stack[key].push(result[key]);
+                                            }
                                         } else {
-                                            stack[key] = stack[key] ? [stack[key]] : [];
-                                            stack[key].push(result[key]);
+                                            if (_isArray(result[key])) {
+                                                stack[key] = stack[key] ? [stack[key]].concat(result[key]) : [].concat(result[key]);
+                                            } else {
+                                                stack[key] = stack[key] ? [stack[key]] : [];
+                                                stack[key].push(result[key]);
+                                            }
                                         }
                                     }
                                 }
+                                // Resolve New Return Object
+                                resolve(stack);
                             }
-                            // Resolve New Return Object
-                            resolve(stack);
-                        }
-                    })
-                    .catch((err) => {
-                        reject(err);
-                    });
-            });
-        }
-        // Checks for Array Status
+                        })
+                        .catch((err) => {
+                            reject(err);
+                        });
+                });
+            }
+            // Checks for Array Status
         function _isArray(obj) {
             return !!obj && Array === obj.constructor;
         }
     },
     // Scheduler for promises - runs them periodically a la cron notation
     scheduler: (stack, handler) => {
-        return function (id, schedule, job) {
-            let jobHandler = handler ? handler(stack) : _jobHandler;
-            return Patterns.accumulator(stack)(id, Patterns.via(cron.schedule(schedule, jobHandler(id, job))));
-        }
-        // BASIC CRON WRAPPER
+        return function(id, schedule, job) {
+                let jobHandler = handler ? handler(stack) : _jobHandler;
+                return Patterns.accumulator(stack)(id, Patterns.via(cron.schedule(schedule, jobHandler(id, job))));
+            }
+            // BASIC CRON WRAPPER
         function _jobHandler(id, cronJob) {
             return () => {
                 Promise.resolve()
                     .then(() => Patterns.registrator(stack)("", Patterns.via(cronJob())))
                     .catch((err) => {
-                        console.error("\nERROR:", err,"\n\tJOB_ID:", id);
+                        console.error("\nERROR:", err, "\n\tJOB_ID:", id);
                         for (let j_id of stack[id]) {
                             j_id.destroy();
                         }

@@ -1,3 +1,4 @@
 #!/bin/bash
-source money-maker.env
-nohup node money-maker.sh >> money.output &
+
+source *.env;
+nohup node money-maker.js 1>> money.output 2>>money.error &

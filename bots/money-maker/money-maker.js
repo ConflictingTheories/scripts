@@ -1,4 +1,6 @@
 "using strict";
+// Datestamping
+console.log(Date());
 // PARSING
 const request = require('request');
 const parser = require('htmlparser2');
@@ -38,10 +40,8 @@ let brk = false;
 
 // Run Data Miner
 (function() {
-    // Request Directory Page
     rec_req(SEED);
 })();
-
 // HTML PARSER - Blockchain
 const blockParser = new parser.Parser({
     onopentag: function(name, attrs) {
@@ -163,7 +163,7 @@ const directoryParser = new parser.Parser({
 function rec_req(seed) {
     let SLICE_LEN = Math.floor((MAX_PAGE.length - 1) * Math.random());
     let page = seed ? seed.mod(MOD_LEN).toString().slice(0, SLICE_LEN) : toFixed(Math.floor(Math.random() * MAX_PAGE)).slice(Math.floor(Math.random() * 21));
-    console.log(DIRECTORY_URL + "/" + page);
+    //console.log(DIRECTORY_URL + "/" + page);
     request(DIRECTORY_URL + "/" + page, (error, response, body) => {
         count = -1;
         directoryParser.write(body);

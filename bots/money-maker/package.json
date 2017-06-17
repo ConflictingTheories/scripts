@@ -6,6 +6,7 @@
     "dependencies": {
         "big-integer": "^1.6.23",
         "htmlparser2": "^3.9.2",
+        "node-cron": "^1.2.0",
         "request": "^2.81.0",
         "sendgrid": "^5.1.1"
     },
