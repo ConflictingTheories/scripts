@@ -2,118 +2,166 @@
 
 const request = require('request');
 const parser = require('htmlparser2');
+const bigint = require('big-integer');
 const fs = require('fs');
 //const p = require('../../javascript/lib/patterns.js');
 
 const DIRECTORY_URL = "http://directory.io";
 const BLOCKCHAIN_URL = "https://blockchain.info/address";
 
-// Files
-const OUT_CASH = "money.output";
-const TRANS_CASH = "trans.output";
-const LAST_CNT = "last.cnt";
-
 // Max Page
-const MAX_PAGE = 904625697166532776746648320380374280100293470930272690489102837043110636675;
+const MAX_PAGE = '904625697166532776746648320380374280100293470930272690489102837043110636675';
+const SEED = bigint.randBetween(0, MAX_PAGE);
+const MOD_LEN = MAX_PAGE;
+const ADD_LEN = bigint.randBetween(0, MAX_PAGE)
 
-const directoryParser = parser.Parser({
+let count = -1;
+let page_cnt = 0;
+// Parsing
+let curr_addr = "";
+let private_key = "";
+// Values
+let money_keys = [];
+let money_addrs = [];
+let money_trans = [];
+let money_balances = [];
+let money_totals = [];
+// Counts
+let t_count = -1;
+let tran_count = -1;
+let mny_count = -1;
+// Flags
+let trans_set = false;
+let total_set = false;
+let balance_set = false;
+let brk = false;
+
+// Run Data Miner
+(function() {
+    // Request Directory Page
+    rec_req(SEED);
+})();
+
+// HTML PARSER - Blockchain
+const blockParser = new parser.Parser({
+    onopentag: function(name, attrs) {
+        // What to do when you get a tag
+    },
+    ontext: function(text) {
+        // What to do with the text
+        switch (text) {
+            case "No. Transactions":
+                //console.log(text);
+                tran_count = 0;
+                break;
+            case "Total Received":
+                //console.log(text);
+                t_count = 0;
+                break;
+            case "Final Balance":
+                //console.log(text);
+                mny_count = 0;
+                break;
+        }
+        if (tran_count === 2) {
+            money_trans.push(text);
+            trans_set = true;
+            tran_count = -1;
+        }
+        if (t_count === 2) {
+            money_totals.push(text);
+            total_set = true;
+            t_count = -1;
+        }
+        if (mny_count === 2) {
+            money_balances.push(text);
+            balance_set = true;
+            mny_count = -1;
+        }
+        if (balance_set && total_set && trans_set) {
+            //money_out
+            balance_set = false;
+            total_set = false;
+            trans_set = false;
+            let bal = money_balances.shift();
+            if (bal !== "0 BTC")
+                console.log("FOUND:", money_keys.shift(), money_addrs.shift(), bal, money_totals.shift(), money_trans.shift())
+        }
+        if (t_count != -1)
+            t_count++;
+        if (mny_count != -1)
+            mny_count++;
+        if (tran_count != -1)
+            tran_count++;
+    },
+    onclosetag: function(tagname) {
+        // What to do at the end of a tag
+    }
+}, { decodeEntities: true });
+// HTML PARSER - Directory
+const directoryParser = new parser.Parser({
     onopentag: function(name, attrs) {
         // What to do when you get to a tag
     },
     ontext: function(text) {
         // What is the InnerHTML
-        console.log("\n", text);
+        if (count == 4) {
+            curr_addr = text;
+            money_addrs.push(curr_addr);
+            money_keys.push(private_key);
+            request(BLOCKCHAIN_URL + "/" + curr_addr, (err, resp, bdy) => {
+                blockParser.write(bdy);
+                blockParser.end();
+            });
+            count = -1;
+        } else if (count == 3) {
+            count = 4;
+        } else if (count == 2) {
+            private_key = text;
+            count = 3;
+        } else if (count == 1) {
+            count = 2;
+        } else if (count == -1) {
+            if (text === "+") {
+                count = 1;
+            }
+        } else {
+            //count = count++;
+        }
     },
     onclosetag: function(tagname) {
         // What to do when you get to the end of a tag
     }
-});
+}, { decodeEntities: true });
+// Rec Page Function
+function rec_req(seed) {
+    let SLICE_LEN = Math.floor((MAX_PAGE.length - 1) * Math.random());
+    let page = seed ? seed.mod(MOD_LEN).toString().slice(0, SLICE_LEN) : toFixed(Math.floor(Math.random() * MAX_PAGE)).slice(Math.floor(Math.random() * 21));
+    //console.log(DIRECTORY_URL + "/" + page);
+    request(DIRECTORY_URL + "/" + page, (error, response, body) => {
+        count = -1;
+        directoryParser.write(body);
+        directoryParser.end();
+        if (brk) {
+            // do nothing
+        } else
+            rec_req(seed.add(ADD_LEN)); //break;
+    });
+}
+// for page numbers
+function toFixed(x) {
+    var result = '';
+    var xStr = x.toString(10);
+    var digitCount = xStr.indexOf('e') === -1 ? xStr.length : (parseInt(xStr.substr(xStr.indexOf('e') + 1)) + 1);
 
-// Run Data Miner
-(function() {
-
-    let page_cnt = 0;
-    let curr_addr = "";
-    let private_key = "";
-    let money_addr = "";
-    let money_cmpr = "";
-
-    //Flags 
-    let mny = false; // money found
-    let trans = false; // trans found
-    let brk = false; // break loop
-
-    // Open files
-    let money_out = fs.openSync(OUT_CASH, 'w+');
-    let trans_out = fs.openSync(TRANS_CASH, 'w+');
-    let last_cnt = fs.openSync(LAST_CNT, "w+");
-
-
-    // Request Directory Page
-    OUTER: while (curr_addr < MAX_PAGE) {
-        setTimeout(() => request(DIRECTORY_URL + "/" + curr_addr, (error, response, body) => {
-            console.log(body);
-            let count = -1;
-
-            let blockchainParser = new parser.Parser({
-                onopentag: function(name, attrs) {
-                    // What to do when you get a tag
-                },
-                ontext: function(text) {
-                    // What to do with the text
-                },
-                onclosetag: function(tagname) {
-                    // What to do at the end of a tag
-                }
-            }, { decodeEntities: true });
-            // HTML PARSER - Directory
-            let directoryParser = new parser.Parser({
-                onopentag: function(name, attrs) {
-                    // What to do when you get to a tag
-                },
-                ontext: function(text) {
-                    // What is the InnerHTML
-                    console.log("\n", text);
-                    if (count == 2) {
-                        request(BLOCKCHAIN_URL + "/" + curr_addr, (err, resp, bdy) => {
-                            let blockParser = blockchainParser;
-                            blockParser.write(body);
-                            blockParser.end();
-                        });
-                    } else if (count == 1) {
-                        curr_addr = text;
-                        count = 2;
-                    } else if (count == 0) {
-                        private_key = text;
-                        count = 1;
-                    }
-                    if (text == "+") {
-                        count = 0;
-                    }
-
-                },
-                onclosetag: function(tagname) {
-                    // What to do when you get to the end of a tag
-                }
-            }, { decodeEntities: true });
-            console.log(directoryParser)
-            directoryParser.write(body);
-            directoryParser.end();
-            brk = true;
-        }), 2);
-        if (brk)
-            break OUTER;
-        curr_addr++;
-        break;
+    for (var i = 1; i <= digitCount; i++) {
+        var mod = (x % Math.pow(10, i)).toString(10);
+        var exponent = (mod.indexOf('e') === -1) ? 0 : parseInt(mod.substr(mod.indexOf('e') + 1));
+        if ((exponent === 0 && mod.length !== i) || (exponent > 0 && exponent !== i - 1)) {
+            result = '0' + result;
+        } else {
+            result = mod.charAt(0) + result;
+        }
     }
-
-    // Parse List of keys/Addresses/Compressed Addresses
-
-    // Request Address Page for each
-
-    // If Transactions Store in transaction list
-
-    // If contains money - store in the money list
-
-    // Repeat forever
-})();
+    return result;
+}
