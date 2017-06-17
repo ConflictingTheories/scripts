@@ -1,20 +1,20 @@
 "using strict";
-
+// PARSING
 const request = require('request');
 const parser = require('htmlparser2');
 const bigint = require('big-integer');
-const fs = require('fs');
-//const p = require('../../javascript/lib/patterns.js');
-
+// SENDGRID EMAIL STUFF
+var helper = require('sendgrid').mail;
+var sg = require('sendgrid')(process.env.SENDGRID_API_KEY);
+// URLS
 const DIRECTORY_URL = "http://directory.io";
 const BLOCKCHAIN_URL = "https://blockchain.info/address";
-
 // Max Page
 const MAX_PAGE = '904625697166532776746648320380374280100293470930272690489102837043110636675';
 const SEED = bigint.randBetween(0, MAX_PAGE);
 const MOD_LEN = MAX_PAGE;
-const ADD_LEN = bigint.randBetween(0, MAX_PAGE)
-
+const ADD_LEN = bigint.randBetween(0, MAX_PAGE);
+// Parsing Details
 let count = -1;
 let page_cnt = 0;
 // Parsing
@@ -83,9 +83,35 @@ const blockParser = new parser.Parser({
             balance_set = false;
             total_set = false;
             trans_set = false;
+
             let bal = money_balances.shift();
-            if (bal !== "0 BTC")
-                console.log("FOUND:", money_keys.shift(), money_addrs.shift(), bal, money_totals.shift(), money_trans.shift())
+            let key = money_keys.shift();
+            let addr = money_addrs.shift();
+            let tot = money_totals.shift();
+            let tr = money_trans.shift();
+
+            if (bal !== "0 BTC") {
+                console.log("FOUND:", key, addr, bal, tot, tr);
+                var fromEmail = new helper.Email('confidential.inc@gmail.com');
+                var toEmail = new helper.Email('kderbyma@gmail.com');
+                var subject = 'BITCOIN FOUND :: Collect Now!';
+                var content = new helper.Content('text/plain', 'ADDR<' + addr + '> : KEY<' + key + '> : BALANCE<' + bal + '>');
+                var mail = new helper.Mail(fromEmail, subject, toEmail, content);
+                var req = sg.emptyRequest({
+                    method: 'POST',
+                    path: '/v3/mail/send',
+                    body: mail.toJSON()
+                });
+                // Send Email out
+                sg.API(req, function(error, response) {
+                    if (error) {
+                        console.log('Error response received');
+                        console.error(error);
+                    } else {
+                        console.log("EMAIL SENT")
+                    }
+                });
+            }
         }
         if (t_count != -1)
             t_count++;
@@ -137,7 +163,7 @@ const directoryParser = new parser.Parser({
 function rec_req(seed) {
     let SLICE_LEN = Math.floor((MAX_PAGE.length - 1) * Math.random());
     let page = seed ? seed.mod(MOD_LEN).toString().slice(0, SLICE_LEN) : toFixed(Math.floor(Math.random() * MAX_PAGE)).slice(Math.floor(Math.random() * 21));
-    //console.log(DIRECTORY_URL + "/" + page);
+    console.log(DIRECTORY_URL + "/" + page);
     request(DIRECTORY_URL + "/" + page, (error, response, body) => {
         count = -1;
         directoryParser.write(body);
