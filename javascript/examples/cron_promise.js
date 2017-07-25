@@ -1,6 +1,3 @@
-// ============================
-// Javascript Design Patterns
-// ============================
 // Copyright (c) Kyle Derby MacInnis
 
 var p = require('../lib/patterns.js');
@@ -10,6 +7,8 @@ var via = p.via;
 var registrator = p.registrator;
 var accumulator = p.accumulator;
 var scheduler = p.scheduler;
+var repeater = p.repeater;
+var stopper = p.stopper;
 
 // MAIN LOOP
 (function main() {
@@ -17,17 +16,37 @@ var scheduler = p.scheduler;
     let register = registrator(stack);
     let accumulate = accumulator(stack);
     let schedule = scheduler(stack);
+    let repeat = repeater(stack);
+    let stop = stopper(stack);
     let scheduleCustom = scheduler(stack, customHandler);
     let start = Promise.resolve();
     start
         .then(() => register("setup", via(doActionPM))) // Setup Actions 
         .then(() => accumulate("setup", via(doActionPM))) // More Setup Actions
+        .then(() => repeat("current_time", 1000, timeJob)) // output tie to screen (every second)
+        .then(() => repeat("tline", 10, matrixCode(34))) // output tie to screen (every second)
         .then(() => schedule("good_jobs", "*/2 * * * * *", cronJob)) // Job 1
         .then(() => schedule("bad_jobs", "*/15 * * * * *", cronJob2)) // Job 2 // Fails -- should kill how system
         .then(() => schedule("good_jobs", "*/10 * * * * *", cronJob3)) // Job 3
+        .then(() => stop("bad_jobs"))
+        .then(() => { setTimeout(() => stop("current_time"), 9000); })
         .then(() => console.log("JOBS STARTED::\n", stack))
         .catch((err) => console.error("ERROR:", err, "\nSTACK DUMP::", stack));
 })();
+
+function matrixCode(size) {
+    return () => {
+        return new Promise((resolve, reject) => {
+            let line = [];
+            for (let i = 0; i < size; i++) {
+                let code = Math.floor(16 * Math.random())
+                line.push(code);
+            }
+            let tline = line.join("\t");
+            console.log(tline);
+        });
+    }
+}
 // TEST ACTION DUMMY
 function doActionPM(ms) {
     return new Promise((resolve, reject) => {
@@ -52,10 +71,18 @@ function createCronJobWrapper(id, stack, cronJob) {
             });
     }
 }
+// TIME JOB
+function timeJob() {
+    return new Promise((resolve, reject) => {
+        let time = Date();
+        console.log(time);
+        resolve(time);
+    });
+}
 // CRON JOB #1
 function cronJob() {
     return new Promise((resolve, reject) => {
-        console.log("running job")
+        console.log("running job");
         // Do Job Here
         let a = 1;
         let b = 2;
@@ -70,22 +97,22 @@ function cronJob2() {
         console.log("WSS:2");
         let client = new WebSocketClient();
         client.connect('wss://echo.websocket.org')
-        client.on('connect',function(ws){
+        client.on('connect', function(ws) {
             console.log('connected - 2');
-            ws.on('error', function(err){
+            ws.on('error', function(err) {
                 console.error("error:");
                 ws.close();
                 reject(err);
             });
-            ws.on('message', function(msg){
+            ws.on('message', function(msg) {
                 console.log("recived - 2");
                 ws.close();
                 resolve(true);
             });
-            ws.on('close',function(ws){
+            ws.on('close', function(ws) {
                 console.log("closed - 2");
             });
-            ws.send('message',"yo");
+            ws.send('message', "yo");
         });
     });
 }
@@ -98,21 +125,21 @@ function cronJob3() {
         console.log('WSS:3')
         let client = new WebSocketClient();
         client.connect('wss://echo.websocket.org')
-        client.on('connect',function(ws){
+        client.on('connect', function(ws) {
             console.log('connected - 3');
-            ws.on('error', function(err){
+            ws.on('error', function(err) {
                 console.error("error:");
                 reject(err);
             });
-            ws.on('message', function(msg){
+            ws.on('message', function(msg) {
                 console.log("recived - 3");
                 ws.close();
                 resolve(true);
             });
-            ws.on('close',function(ws){
+            ws.on('close', function(ws) {
                 console.log("closed - 3");
             });
-            ws.send('message',"yo");
+            ws.send('message', "yo");
         });
     });
 }
@@ -121,7 +148,7 @@ function customHandler(stack) {
     return (id, cronJob) => {
         return () => {
             Promise.resolve()
-                .then(() => registrator(stack)("",via(cronJob)))
+                .then(() => registrator(stack)("", via(cronJob)))
                 .catch((err) => {
                     console.error("ID:", id, "\nERROR:", err)
                     for (j_id of stack[id]) {

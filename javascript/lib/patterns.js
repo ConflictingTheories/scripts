@@ -19,12 +19,12 @@ const Patterns = {
         else return Promise.resolve(object);
     },
     // Memoize a Function (allows for custom key generator *optional)
-    memoize: (fn, keygen) => {
+    memoize: (fn, keyGen) => {
         return () => {
             // Actual Cache Object
             this.cache = [];
             // Used to Determine Inputs
-            keygen = keygen || JSON.stringify;
+            let keygen = keyGen || JSON.stringify;
             // Setup the Cache
             let cache = this.cache;
             // Extract Inputs
@@ -65,7 +65,8 @@ const Patterns = {
                 // Create Link in the Chain - If Function (not Promise) then resolve to promise
                 let doAction = (typeof promise === "function") ? promise() : promise;
                 // Resolve Promise and retrieve result
-                doAction.then((result) => {
+                doAction
+                    .then((result) => {
                         // If Property name is Set and prop exists
                         //if (property && property != "" && prop) {
                         // If Property name is Set (includes undefined)    
@@ -102,7 +103,8 @@ const Patterns = {
                     // Create Link in the Chain - If Function (not Promise) then resolve to promise
                     let doAction = (typeof promise === "function") ? promise() : (typeof promise.then === "function") ? promise : Promise.resolve(promise);
                     // Resolve Promise and retrieve result
-                    doAction.then((result) => {
+                    doAction
+                        .then((result) => {
                             // If Array is sent in (Concat)
                             if (_isArray(result)) {
                                 // If Property name is Set and prop exists
@@ -187,6 +189,7 @@ const Patterns = {
     },
     // Scheduler for promises - runs them periodically a la cron notation
     scheduler: (stack, handler) => {
+        // Main Method
         return function(id, schedule, job) {
                 let jobHandler = handler ? handler(stack) : _jobHandler;
                 return Patterns.accumulator(stack)(id, Patterns.via(cron.schedule(schedule, jobHandler(id, job))));
@@ -206,6 +209,44 @@ const Patterns = {
             }
         }
     },
+    // Repeats a promise over and over (only provides most recent interval value)
+    repeater: (stack, handler) => {
+        // Main Method
+        return function(id, interval, job) {
+
+                let jobHandler = handler ? handler(stack) : _jobHandler;
+                return Patterns.registrator(stack)(id, Patterns.via(setInterval(jobHandler(id, job), interval)));
+            }
+            // BASIC WRAPPER
+        function _jobHandler(id, job) {
+            return () => {
+                Promise.resolve()
+                    .then(() => Patterns.registrator(stack)("", Patterns.via(job())))
+                    .catch((err) => {
+                        console.error("\nERROR:", err, "\n\tJOB_ID:", id);
+                        clearInterval(stack[id]);
+                        process.exit();
+                    });
+            }
+        }
+    },
+    // Global Stop
+    stopper: (stack) => {
+        return (id) => {
+            return new Promise((resolve, reject) => {
+                try {
+                    for (j_id of stack[id]) {
+                        if (j_id.destroy)
+                            j_id.destroy();
+                    }
+                    resolve();
+                } catch (e) {
+                    clearInterval(stack[id]);
+                    resolve()
+                }
+            });
+        }
+    }
 
     // Look into Strategies
 
