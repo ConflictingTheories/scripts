@@ -1,0 +1,43 @@
+{
+    "name": "csps-itpm-suite",
+    "version": "0.1.0",
+    "description": "Project Management Suite focused on PMI Princinples",
+    "main": "bin/app.js",
+    "scripts": {
+        "start": "ng build && node bin/app.js 1> csps.output 2> csps.error",
+        "test": "echo -e \"\\nWARNING: Tests Not Implemented\\n\""
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://bitbucket.org/kdmsolutions/kw1711.git"
+    },
+    "keywords": [
+        "pm",
+        "node",
+        "project",
+        "management",
+        "earn",
+        "agile",
+        "scrum",
+        "waterfall",
+        "focus"
+    ],
+    "author": "Kyle Derby MacInnis",
+    "license": "mit",
+    "bugs": {
+        "url": "https://kderbyma.com"
+    },
+    "homepage": "https://kderbyma.com",
+    "dependencies": {
+        "body-parser": "^1.18.2",
+        "cookie-parser": "^1.4.3",
+        "cors": "^2.8.4",
+        "ejs": "^2.5.7",
+        "express": "^4.16.2",
+        "express-session": "^1.15.6"
+    },
+    "devDependencies": {
+        "@angular/cli": "^1.5.4",
+        "@angular/core": "^1.5.4"
+    }
+}

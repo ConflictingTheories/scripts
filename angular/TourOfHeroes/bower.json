@@ -1,0 +1,36 @@
+{
+  "name": "csps-itpm-suite",
+  "description": "Project Management Suite focused on PMI Principles",
+  "main": "bin/app.js",
+  "authors": [
+    "Kyle Derby MacInnis"
+  ],
+  "license": "Private",
+  "keywords": [
+    "pm",
+    "node",
+    "project",
+    "management",
+    "earn",
+    "agile",
+    "scrum",
+    "waterfall",
+    "focus"
+  ],
+  "homepage": "https://kderbyma.com",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "^1.6.4",
+    "angular-ui-router": "^1.0.4",
+    "angular-ui-bootstrap": "^2.5.0",
+    "jquery": "^3.2.1",
+    "angular-bootstrap": "^2.5.0",
+    "bootstrap": "^3.3.7"
+  }
+}

@@ -56,6 +56,21 @@ const Patterns = {
             };
         })();
     },
+    // Deregister from the stack
+    deregistrator: (stack) => {
+        // Returns a function to Chain promises together with property names
+        return function(property) {
+            // The function returns a new Promise for the Chain itself
+            return new Promise((resolve, reject) => {
+                // Create Link in the Chain - If Function (not Promise) then resolve to promise
+                if (property && property != "") {
+                    // Set New Property
+                    delete stack[property];
+                }
+                resolve(stack);
+            });
+        }
+    },
     // Register for Promises (Object to store results into) ( > ) (injector - Assignor)
     registrator: (stack) => {
         // Returns a function to Chain promises together with property names
