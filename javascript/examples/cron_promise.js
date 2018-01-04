@@ -24,7 +24,7 @@ var stopper = p.stopper;
         .then(() => register("setup", via(doActionPM))) // Setup Actions 
         .then(() => accumulate("setup", via(doActionPM))) // More Setup Actions
         .then(() => repeat("current_time", 1000, timeJob)) // output tie to screen (every second)
-        .then(() => repeat("tline", 10, matrixCode(34))) // output tie to screen (every second)
+        .then(() => repeat("tline", 1000, matrixCode(34))) // output tie to screen (every second)
         .then(() => schedule("good_jobs", "*/2 * * * * *", cronJob)) // Job 1
         .then(() => schedule("bad_jobs", "*/15 * * * * *", cronJob2)) // Job 2 // Fails -- should kill how system
         .then(() => schedule("good_jobs", "*/10 * * * * *", cronJob3)) // Job 3
@@ -39,11 +39,12 @@ function matrixCode(size) {
         return new Promise((resolve, reject) => {
             let line = [];
             for (let i = 0; i < size; i++) {
-                let code = Math.floor(16 * Math.random())
-                line.push(code);
+                let code = Math.floor(255 * Math.random())
+                line.push(String.fromCharCode(code));
             }
             let tline = line.join("\t");
             console.log(tline);
+            resolve(tline);
         });
     }
 }
